@@ -17,9 +17,20 @@ public class Interactable : MonoBehaviour
 	// Update is called once per frame
 	public void OnTriggerEnter2D (Collider2D other)
 	{
-		if (other.gameObject.tag == "Player") 
+		if (this.gameObject.tag == "Interactable")
 		{
-			interactButton.SetActive(true);
+			if (other.gameObject.name == "Player 1") 
+				{
+					interactButton.SetActive(true);
+				}
+		}
+
+		if (this.gameObject.tag == "CrystalInteractable")
+		{
+			if (other.gameObject.name == "Player 2") 
+			{
+				interactButton.SetActive(true);
+			}
 		}
 	}
 

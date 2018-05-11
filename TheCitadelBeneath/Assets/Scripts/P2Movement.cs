@@ -25,13 +25,19 @@ public class P2Movement : MonoBehaviour
 	public float moveVer;
 	public bool Flipped;
 
-	public bool grabable = false;
-	public bool grabbed = false;
+	public bool glowable = false;
 	PickUp pickUpScript;
+
+	public LevelManager levelManager;
+
+	public Animator anim;
+
 
 	void Start()
 	{
 		body = transform.GetComponent<Rigidbody2D>();
+		levelManager = FindObjectOfType<LevelManager> ();
+
 	}
 
 	void Update ()
@@ -41,25 +47,16 @@ public class P2Movement : MonoBehaviour
 			Debug.Log ("Paused");
 		}
 
-		if (Input.GetKey (InteractKey)) 
+		if (Input.GetKeyDown (InteractKey)) 
 		{
-			if (grabable) 
+
+			if (glowable) 
 			{
-				if (!grabbed) 
-				{
-					Debug.Log ("I grabbed something!");
-					pickUpScript.SetParent(this.gameObject);
-					grabbed = true;
-				}
+				Debug.Log ("Connecting");
+				anim.SetTrigger ("GlowGreen");
 
+				pickUpScript.Connect ();
 			}
-		}
-
-		if (Input.GetKeyUp (InteractKey)) 
-		{
-			Debug.Log ("I let something go!");
-			pickUpScript.DetachFromParent();
-			grabbed = false;
 		}
 
 		if (Input.GetKeyDown (ThrowKey)) 
@@ -72,8 +69,8 @@ public class P2Movement : MonoBehaviour
 	void FixedUpdate()
 	{
 
-		moveHor = Input.GetAxisRaw ("PlayerTwoLeftJoystickHor");
-		moveVer = Input.GetAxisRaw ("PlayerTwoLeftJoystickVert");
+		moveHor = Input.GetAxisRaw ("PlayerTwoLeftJoystickHor")  * Mathf.Lerp(minSpeed,maxSpeed,Time.deltaTime) * Time.deltaTime;
+		moveVer = Input.GetAxisRaw ("PlayerTwoLeftJoystickVert") * Mathf.Lerp (minSpeed, maxSpeed, Time.deltaTime) * Time.deltaTime;
 
 		Vector2 stickInput = new Vector2 (moveHor, moveVer);
 		if (Mathf.Abs (stickInput.x) < deadzone)
@@ -84,24 +81,54 @@ public class P2Movement : MonoBehaviour
 		Vector2 movement = new Vector2 (moveHor, moveVer);
 
 		body.AddForce (movement * (Mathf.Clamp(Time.time, minSpeed, maxSpeed)));
+
+//		if (moveHor < 0) 
+//		{
+//		}
+//
+//		if (moveHor > 0) 
+//		{
+//		}
+
 	}
 
 
 	public void OnTriggerEnter2D(Collider2D other)
 	{
-		if (other.gameObject.tag == "Interactable") 
+
+		if (other.gameObject.tag == "CrystalInteractable") 
 		{
+			glowable = true;
 			pickUpScript = other.gameObject.GetComponent<PickUp> ();
-			grabable = true;
+		}
+
+		if (other.gameObject.tag == "Land") 
+		{
+			Respawn ();
 		}
 	}
 
 	public void OnTriggerExit2D(Collider2D other)
 	{
-		if (other.gameObject.tag == "Interactable") 
+		if (other.gameObject.tag == "CrystalInteractable") 
 		{
-			grabable = false;
+			glowable = false;
 		}
 	}
+
+	void OnCollisionEnter2D (Collision2D other)
+	{
+		if (other.gameObject.name == "AirPocket") 
+		{
+			body.velocity = Vector2.zero;
+		}
+	}
+
+	void Respawn()
+	{
+		GetComponent<Rigidbody2D> ().velocity = Vector2.zero;
+		this.transform.position = levelManager.currentCheckpointP2.transform.position;
+	}
+
 
 }

@@ -13,44 +13,76 @@ public class PickUp : MonoBehaviour
 	public bool onTop;
 	public bool onBottom;
 
+	public bool connected;
+	public float force = 15;
+
+	Light crystalLight;
+	public float duration = 0.3f;
+
+	public Animator anim;
+
+	P2Movement player2Script;
+
 	// Use this for initialization
 	void Start () 
 	{
+
+		player2Script = GameObject.Find ("Player 2").GetComponent<P2Movement> ();
+
+
 		body2D = GetComponent<Rigidbody2D> ();
+		body2D.bodyType = RigidbodyType2D.Dynamic;
+
+		if (this.gameObject.tag == ("CrystalInteractable")) 
+		{
+			body2D.bodyType = RigidbodyType2D.Kinematic;
+			crystalLight = GetComponentInChildren<Light> ();
+			crystalLight.enabled = false;
+		}
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
-		if (grabbed) 
+
+
+		if (this.gameObject.tag == ("CrystalInteractable")) 
 		{
-			body2D.constraints = RigidbodyConstraints2D.FreezePositionY;
-			body2D.constraints = RigidbodyConstraints2D.FreezeRotation;
-
-			if (onRightSide) 
+			if (connected) 
 			{
-				this.transform.position = new Vector3 (player.transform.position.x + 1f, player.transform.position.y, player.transform.position.z);
-			}
+				crystalLight.enabled = true;
+				transform.position = new Vector2(transform.position.x, Mathf.Lerp(transform.position.y,-1.5f, Time.deltaTime));
+				body2D.gravityScale = 0;
+				anim.SetTrigger ("Flash");
 
-			if (onLeftSide) 
-			{
-				this.transform.position = new Vector3 (player.transform.position.x - 1f, player.transform.position.y, player.transform.position.z);
+				StartCoroutine ("Timer");
 			}
+		}
 
-			if (onTop) 
-			{
-				this.transform.position = new Vector3 (player.transform.position.x, player.transform.position.y  + 1f, player.transform.position.z);
-			}
-
-			if (onBottom) 
-			{
-				this.transform.position = new Vector3 (player.transform.position.x, player.transform.position.y  - 1f, player.transform.position.z);
-			}
-		} 
-		else 
+		if (this.gameObject.tag == ("Interactable")) 
 		{
-			body2D.constraints = RigidbodyConstraints2D.None;
+			if (grabbed) 
+			{
+				body2D.constraints = RigidbodyConstraints2D.FreezePositionY;
+				body2D.constraints = RigidbodyConstraints2D.FreezeRotation;
+				body2D.velocity = Vector2.zero;
 
+				if (onRightSide) 
+				{
+					this.transform.position = new Vector3 (player.transform.position.x + 1f, player.transform.position.y, player.transform.position.z);
+				}
+
+				if (onLeftSide) 
+				{
+					this.transform.position = new Vector3 (player.transform.position.x - 1f, player.transform.position.y, player.transform.position.z);
+				}
+
+			} 
+			else 
+			{
+				body2D.constraints = RigidbodyConstraints2D.None;
+
+			}
 		}
 
 		if (onLeftSide) 
@@ -80,6 +112,8 @@ public class PickUp : MonoBehaviour
 			onRightSide = false;
 			onTop = false;
 		}
+
+
 	}
 
 	public void OnTriggerEnter2D (Collider2D other)
@@ -100,14 +134,11 @@ public class PickUp : MonoBehaviour
 			onLeftSide = true;
 		}
 
-		if (other.gameObject.name == "ObjectSpaceTop") 
-		{
-			onTop = true;
-		}
 
-		if (other.gameObject.name == "ObjectSpaceBottom") 
+		if (other.gameObject.name == "Player 2") 
 		{
-			onBottom = true;
+			Debug.Log ("The Crystals begin to hum");
+			GameObject.Find ("Player 2").GetComponent<P2Movement> ();
 		}
 	}
 
@@ -119,6 +150,7 @@ public class PickUp : MonoBehaviour
 			onLeftSide = false;
 			onRightSide = false;
 		}
+
 	}
 
 	public void SetParent(GameObject newParent)
@@ -132,6 +164,23 @@ public class PickUp : MonoBehaviour
 	{
 		transform.parent = null;
 		grabbed = false;
+	}
+
+	public void Connect()
+	{
+		if (player2Script.glowable == true)
+		{
+			connected = !connected;
+		}
+	}
+
+	IEnumerator Timer()
+	{
+		yield return new WaitForSeconds (2.5f);
+		connected = false;
+		transform.position = new Vector2(transform.position.x, Mathf.Lerp(transform.position.y,-4f, Time.deltaTime));
+		crystalLight.enabled = false;
+
 	}
 
 }

@@ -3,7 +3,12 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Ground
+  - Interactable
+  - Water
+  - CrystalInteractable
+  - Land
   layers:
   - Default
   - TransparentFX
@@ -13,12 +18,12 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - IgnoreThisObject
+  - Player1
+  - Player2
+  - FloatablePlatforms
+  - PassableObjects
+  - DemoOnly
   - 
   - 
   - 

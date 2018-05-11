@@ -9,7 +9,9 @@ public class P1Movement : MonoBehaviour
 	public float moveSpeed;
 	public float maxSpeed;
 	public bool jump = false;
-	public float jumpForce;
+	public float jumpForce = 5f;
+	public float fallMultiplier = 2.5f;
+	public float lowJumpMultiplier = 2f;
 	public bool canJump;
 
 	public KeyCode JumpKey;
@@ -29,10 +31,20 @@ public class P1Movement : MonoBehaviour
 	public bool grabbed = false;
 	PickUp pickUpScript;
 
+	public LevelManager levelManager;
+
+	public AudioSource jumpSound;
+	public AudioClip jumpClip;
+
+	public float constantSpeed = 1f;
+
+
 	void Start()
 	{
 		body = transform.GetComponent<Rigidbody2D>();
 		canJump = true;
+
+		levelManager = FindObjectOfType<LevelManager> ();
 	}
 
 	void Update ()
@@ -40,7 +52,21 @@ public class P1Movement : MonoBehaviour
 		if (Input.GetKeyDown(JumpKey) && canJump == true)
 		{
 			Debug.Log ("Jumped");
+//			body.velocity = Vector2.up * jumpForce;
+			jumpSound.PlayOneShot(jumpClip);
 			body.velocity = new Vector2 (body.velocity.x, jumpForce);
+			if (body.velocity.y <= 0) 
+			{
+				body.velocity += Vector2.up * Physics2D.gravity.y * (fallMultiplier - 1) * Time.deltaTime;
+			} 
+			else if 
+				(body.velocity.y > 0 && !Input.GetKey (JumpKey)) 
+			{
+				body.velocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1) * Time.deltaTime;
+			}
+
+//			body.velocity = constantSpeed * (body.velocity.normalized);
+//			body.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
 			canJump = false;
 //			jump = true;
 		}
@@ -50,7 +76,7 @@ public class P1Movement : MonoBehaviour
 			Debug.Log ("Paused");
 		}
 
-		if (Input.GetKey (InteractKey)) 
+		if (Input.GetKeyDown (InteractKey)) 
 		{
 			if (grabable) 
 			{
@@ -120,9 +146,9 @@ public class P1Movement : MonoBehaviour
 			grabable = true;
 		}
 
-		if (other.gameObject.tag == "Underwater") 
+		if (other.gameObject.tag == "Water") 
 		{
-			//Player Dies
+			Respawn ();
 		}
 	}
 
@@ -136,9 +162,20 @@ public class P1Movement : MonoBehaviour
 
 	void OnCollisionEnter2D (Collision2D other)
 	{
-		if(other.gameObject.CompareTag("Ground"))
+		if(other.gameObject.CompareTag("Ground") || other.gameObject.CompareTag("CrystalInteractable"))
 		{
 			canJump = true;
 		}
+
+		if (other.gameObject.name == "AirPocket") 
+		{
+			body.velocity = Vector2.zero;
+		}
+	}
+
+	void Respawn()
+	{
+		GetComponent<Rigidbody2D> ().velocity = Vector2.zero;
+		this.transform.position = levelManager.currentCheckpointP1.transform.position;
 	}
 }
